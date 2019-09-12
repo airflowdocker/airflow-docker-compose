@@ -16,6 +16,8 @@ from compose.cli.command import project_from_options
 from compose.cli.main import TopLevelCommand
 from dotenv import load_dotenv
 
+from airflow_docker_compose import test
+
 
 class UserError(Exception):
     """Raise to send a user consumable message.
@@ -316,9 +318,13 @@ def create_cli(docker_client, docker_compose):
         subprocess.call(["docker-compose", "-f", "tmp-docker-compose.yml", command, *args])
 
     @cli.command("test")
-    @click.option("--extra-test-dir")
-    def test(extra_test_dir):
-        pass
+    @click.option("--dag-dir", default=".")
+    @click.option("--airflowdocker-tag", default="latest")
+    @click.option("--extra-test-dir", default="tests")
+    def _test(dag_dir, airflowdocker_tag, extra_test_dir):
+        test.test_dag(
+            docker_client, dag_dir=dag_dir, tag=airflowdocker_tag, extra_test_dir=extra_test_dir
+        )
 
     @cli.group("variables")
     def variables():
