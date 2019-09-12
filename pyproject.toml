@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "airflow-docker-compose"
+version = "0.1.5"
+description = ""
+authors = [
+    "Dan Cardin <ddcardin@gmail.com>"
+]
+license = "Apache-2.0"
+keywords = [ "airflow", "docker", "docker-compose" ]
+repository = "https://github.com/airflowdocker/airflow-docker-compose"
+packages = [
+    { from = "src", include = "airflow_docker_compose" },
+]
+readme = 'README.md'
+include = [
+    "*.md",
+]
+
+[tool.poetry.dependencies]
+python = ">=3,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
+click = "*"
+docker = "*"
+toml = "*"
+docker-compose = "*"
+python-dotenv = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "^4.4"
+pytest-cov = "^2.6"
+
+isort = "^4.3"
+black = {version = "19.3b0", allows-prereleases = true, python = ">=3.6"}
+flake8 = "^3.7"
+
+[tool.poetry.scripts]
+airflow-docker-compose = "airflow_docker_compose.__main__:run"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.black]
+line_length = 100
+target_version = ['py34', 'py35', 'py36', 'py37']
+
+[tool.isort]
+default_section = 'FIRSTPARTY'
+include_trailing_comma = true
+indent = '    '
+length_sort = false
+line_length = 88
+multi_line_output = 3
+order_by_type = false
+known_first_party = 'tests'
+use_parentheses = true
