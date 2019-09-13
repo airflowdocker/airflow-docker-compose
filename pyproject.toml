@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airflow-docker-compose"
-version = "0.1.5"
+version = "0.1.6"
 description = ""
 authors = [
     "Dan Cardin <ddcardin@gmail.com>"
@@ -35,10 +35,6 @@ flake8 = "^3.7"
 [tool.poetry.scripts]
 airflow-docker-compose = "airflow_docker_compose.__main__:run"
 
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
-
 [tool.black]
 line_length = 100
 target_version = ['py34', 'py35', 'py36', 'py37']
@@ -53,3 +49,7 @@ multi_line_output = 3
 order_by_type = false
 known_first_party = 'tests'
 use_parentheses = true
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
