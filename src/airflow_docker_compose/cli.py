@@ -240,7 +240,7 @@ def docker_start(docker_client, docker_compose):
         "                   Username: admin\n"
         "                   Password: admin\n\n"
         "                  Flower UI: http://localhost:30001\n\n"
-        "              Tail the logs: ./bin/compose logs -f\n"
+        "              Tail the logs: airflow-docker-compose run logs -f\n"
     )
 
 
@@ -270,14 +270,17 @@ def load_variables(docker_client, docker_compose, file):
     wait_for_container(docker_client, label="initvariables", to=ContainerStates.NotExist)
 
 
-def create_cli(docker_client, docker_compose):
+def create_cli(docker_client):
     @click.group(help="Run all the airflow management commands.")
     def cli():
         pass
 
     @cli.command("up")
     @click.argument("service")
-    def up(service):
+    @click.option("--env", default="prod")
+    def up(service, env):
+        docker_compose = DockerCompose(env=env)
+
         ensure_network(docker_client)
 
         services = []
@@ -300,13 +303,18 @@ def create_cli(docker_client, docker_compose):
         )
 
     @cli.command("reset")
-    def reset():
+    @click.option("--env", default="prod")
+    def reset(env):
+        docker_compose = DockerCompose(env=env)
+
         ensure_network(docker_client)
         docker_reset(docker_compose)
         docker_start(docker_client, docker_compose)
 
     @cli.command("start")
-    def start():
+    @click.option("--env", default="prod")
+    def start(env):
+        docker_compose = DockerCompose(env=env)
         ensure_network(docker_client)
         docker_start(docker_client, docker_compose)
 
@@ -333,13 +341,16 @@ def create_cli(docker_client, docker_compose):
     @variables.command("load")
     @click.argument("file")
     def variables_load(file):
+        docker_compose = DockerCompose()
         load_variables(docker_client, docker_compose, file)
 
     return cli
 
 
 class DockerCompose:
-    def __init__(self):
+    def __init__(self, env="prod"):
+        self.env = env
+
         self.has_created_docker_compose = False
         self.docker_compose_client = None
 
@@ -352,15 +363,25 @@ class DockerCompose:
         airflow_config_location = pkg_resources.resource_filename(
             "airflow_docker_compose", "airflow.cfg"
         )
-        docker_network = open_config()["docker-network"]
+        print(airflow_config_location)
+
+        config = open_config()
+
+        docker_network = config["docker-network"]
         with open(compose_template, "rb") as f:
             data = f.read().decode("utf-8")
+
+        airflow_dags_location = os.path.abspath(config.get("dags-folder", "./dags"))
+        airflowdocker_tag = config.get("airflowdocker-tag", "latest")
 
         result = (
             data.replace("{docker_network}", docker_network)
             .replace("{airflow_config_location}", airflow_config_location)
             .replace("{airflow_environment}", construct_airflow_environment())
             .replace("{airflow_environment_inline}", construct_airflow_environment(inline=True))
+            .replace("{airflow_dags_location}", airflow_dags_location)
+            .replace("{airflow_dags_env}", self.env)
+            .replace("{airflowdocker_tag}", airflowdocker_tag)
         )
         with open("tmp-docker-compose.yml", "wb") as f:
             f.write(result.encode("utf-8"))
@@ -382,9 +403,7 @@ def run():
     load_dotenv()
 
     docker_client = docker.from_env()
-    docker_compose = DockerCompose()
-
-    cli = create_cli(docker_client, docker_compose)
+    cli = create_cli(docker_client)
 
     try:
         cli()
