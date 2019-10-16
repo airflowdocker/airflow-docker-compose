@@ -1,4 +1,5 @@
 import os
+import sys
 
 from compose.utils import split_buffer
 
@@ -26,3 +27,6 @@ def test_dag(docker_client, dag_dir=".", tag="latest", extra_test_dir="tests"):
     finally:
         result.wait()
         result.remove()
+
+    if result.status:
+        sys.exit(result.status)
