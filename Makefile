@@ -27,4 +27,4 @@ format:
 	poetry run black src tests
 
 publish: build
-	poetry publish -u __token__ -p '${PYPI_PASSWORD}' --no-interaction
+	@poetry publish -u __token__ -p '${PYPI_PASSWORD}' --no-interaction
