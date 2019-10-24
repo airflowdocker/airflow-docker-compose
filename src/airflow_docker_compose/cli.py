@@ -363,7 +363,6 @@ class DockerCompose:
         airflow_config_location = pkg_resources.resource_filename(
             "airflow_docker_compose", "airflow.cfg"
         )
-        print(airflow_config_location)
 
         config = open_config()
 
