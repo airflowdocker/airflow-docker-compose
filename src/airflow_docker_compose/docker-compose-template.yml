@@ -1,48 +1,18 @@
-version: "3"
-services:
-
   metadata-db:
-    image: postgres:10
-    ports:
-      - 30003:5432
-    environment:
-      - POSTGRES_DB=airflow
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-    networks:
-      - {docker_network}
 
   airflow-web:
-    image: airflowdocker/service:{airflowdocker_tag}
-    restart: always
-    command:
-      - "webserver"
-    ports:
-      - 30000:8080
     volumes:
       - ${AIRFLOW_DAG_FOLDER:-{airflow_dags_location}/{airflow_dags_env}}:/airflow/dags
       - {airflow_config_location}:/airflow/airflow.cfg
     {airflow_environment}
-    networks:
-      - {docker_network}
 
   airflow-scheduler:
-    image: airflowdocker/service:{airflowdocker_tag}
-    restart: always
-    command:
-      - "scheduler"
     volumes:
       - ${AIRFLOW_DAG_FOLDER:-{airflow_dags_location}/{airflow_dags_env}}:/airflow/dags
       - {airflow_config_location}:/airflow/airflow.cfg
     {airflow_environment}
-    networks:
-      - {docker_network}
 
   airflow-worker:
-    image: airflowdocker/service:{airflowdocker_tag}
-    restart: always
-    command:
-      - "worker"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${AIRFLOW_DAG_FOLDER:-{airflow_dags_location}/{airflow_dags_env}}:/airflow/dags
@@ -50,30 +20,11 @@ services:
       - {airflow_config_location}:/airflow/airflow.cfg
     user: root
     environment:
-      - C_FORCE_ROOT=1
       - AIRFLOW__WORKER__HOST_TEMPORARY_DIRECTORY=${HOST_TEMPORARY_DIRECTORY:-/tmp/airflow}
       {airflow_environment_inline}
-    networks:
-      - {docker_network}
 
   flower:
-    image: airflowdocker/service:{airflowdocker_tag}
-    restart: always
-    command:
-      - "flower"
     volumes:
       - {airflow_config_location}:/airflow/airflow.cfg
-    ports:
-      - 30001:5555
-    networks:
-      - {docker_network}
 
   redis:
-    image: redis:3.2.4
-    restart: always
-    networks:
-      - {docker_network}
-
-networks:
-  {docker_network}:
-    external: true

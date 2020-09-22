@@ -1,6 +1,5 @@
 import contextlib
 import enum
-import functools
 import io
 import json
 import os
@@ -17,44 +16,11 @@ from compose.cli.main import TopLevelCommand
 from dotenv import load_dotenv
 
 from airflow_docker_compose import test
-
-
-class UserError(Exception):
-    """Raise to send a user consumable message.
-    """
-
-
-@functools.lru_cache()
-def open_config():
-    if not os.path.exists("pyproject.toml"):
-        raise UserError("Missing pyproject.toml file.")
-
-    with open("pyproject.toml", "r") as f:
-        config = toml.load(f)
-
-    try:
-        return config["tool"]["airflow-docker-compose"]
-    except KeyError:
-        raise UserError("pyproject.toml file missing a '[tool.airflow-docker-compose]' section.")
-
-
-def construct_airflow_environment(inline=False):
-    airflow_vars = open_config().get("airflow-environment-variables")
-    if not airflow_vars:
-        return ""
-
-    result = ""
-    if not inline:
-        result += "environment:\n"
-    for i, (var, value) in enumerate(airflow_vars.items()):
-        result += "{prefix}- {var}={value}".format(
-            var=var, value=value, prefix="    " if not inline or i != 0 else ""
-        )
-    return result
+from airflow_docker_compose.utils import get_airflow_cfg_location, get_config
 
 
 def ensure_network(docker_client):
-    docker_network = open_config()["docker-network"]
+    docker_network = get_config()["docker-network"]
 
     print(">>> Creating {} if it does not exist".format(docker_network))
     network_names = {network.name for network in docker_client.networks.list()}
@@ -101,7 +67,7 @@ def wait_for_container(docker_client, service=None, label=None, expect=1, to=Con
 
 
 def docker_start(docker_client, docker_compose):
-    config = open_config()
+    config = get_config()
 
     print(">>> Bringing the metadata database up and sleeping to let postgres start")
 
@@ -356,32 +322,10 @@ class DockerCompose:
 
     @functools.lru_cache()
     def create_docker_compose(self):
-        compose_template = pkg_resources.resource_filename(
-            "airflow_docker_compose", "docker-compose-template.yml"
-        )
+        airflow_cfg_location = get_airflow_cfg_location()
+        config = get_config()
+        result = export_compose(create_compose(config, self.env, airflow_cfg_location))
 
-        airflow_config_location = pkg_resources.resource_filename(
-            "airflow_docker_compose", "airflow.cfg"
-        )
-
-        config = open_config()
-
-        docker_network = config["docker-network"]
-        with open(compose_template, "rb") as f:
-            data = f.read().decode("utf-8")
-
-        airflow_dags_location = os.path.abspath(config.get("dags-folder", "./dags"))
-        airflowdocker_tag = config.get("airflowdocker-tag", "latest")
-
-        result = (
-            data.replace("{docker_network}", docker_network)
-            .replace("{airflow_config_location}", airflow_config_location)
-            .replace("{airflow_environment}", construct_airflow_environment())
-            .replace("{airflow_environment_inline}", construct_airflow_environment(inline=True))
-            .replace("{airflow_dags_location}", airflow_dags_location)
-            .replace("{airflow_dags_env}", self.env)
-            .replace("{airflowdocker_tag}", airflowdocker_tag)
-        )
         with open("tmp-docker-compose.yml", "wb") as f:
             f.write(result.encode("utf-8"))
 
