@@ -15,6 +15,8 @@ airflow-docker-compose up
 
 ## Configuration
 
+Note, this library assumes the `docker-compose` utility is available in your path.
+
 In order to use this tool, you should have a local `dags` folder containing your dags.
 You should also have a `pyproject.toml` file which minimally looks like
 

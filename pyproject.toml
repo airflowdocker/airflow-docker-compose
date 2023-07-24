@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airflow-docker-compose"
-version = "0.1.9"
+version = "0.2.0"
 description = ""
 authors = [
     "Dan Cardin <ddcardin@gmail.com>"
@@ -18,10 +18,10 @@ include = [
 
 [tool.poetry.dependencies]
 python = ">=3,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
+
 click = "*"
 docker = "*"
 toml = "*"
-docker-compose = "*"
 python-dotenv = "*"
 
 [tool.poetry.dev-dependencies]
